@@ -153,7 +153,7 @@ class Guguxia(object):
             if k >= len(list_ptn):
                 # 假设i是下一个没加入的东西
                 for j in range(i, len(list_seq)):
-                    list_rt.append(u"RAW->%s" % list_seq[i].word)
+                    list_rt.append(u"RAW->%s" % list_seq[j].word)
                 break
             if i != list_ptn[k][0]:
                 list_rt.append(u"RAW->%s" % list_seq[i].word)
@@ -166,4 +166,3 @@ class Guguxia(object):
                 k += 1
             i += 1
         print u"||".join(list_rt)
-        print "db"
