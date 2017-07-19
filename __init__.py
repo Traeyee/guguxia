@@ -165,4 +165,4 @@ class Guguxia(object):
                 i = list_ptn[k][-1]
                 k += 1
             i += 1
-        print u"||".join(list_rt)
+        return u"||".join(list_rt)
