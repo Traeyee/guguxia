@@ -166,3 +166,22 @@ class Guguxia(object):
                 k += 1
             i += 1
         return u"||".join(list_rt)
+
+    def extract_pattern(self, str_parsed, list_key):
+        line = compatitator.strdecode(str_parsed)
+        if u"->" not in line:
+            return u""
+        list_item = line.split(u"||")
+        list_flag = [item.split(u"->")[0] for item in list_item]
+        list_word = [item.split(u"->")[1] for item in list_item]
+        list_ptn = []
+        if u"TGT" in list_flag:
+            for item in list_key:
+                if item in list_word:
+                    for i in xrange(len(list_item)):
+                        if list_flag[i] == u"TGT":
+                            list_ptn.append(u"TGT")
+                        else:
+                            list_ptn.append(list_word[i])
+                    return u"||".join(list_ptn)
+        return u""
