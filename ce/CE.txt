@@ -1,0 +1,5 @@
+RAW->因为;;由于||CAUSE->*||RAW->所以;;因此;;因而||EFFECT->*
+RAW->之所以||EFFECT->*||RAW->是因为||CAUSE->*
+CAUSE->*||RAW->所以;;因此;;因而||EFFECT->*
+EFFECT->*||RAW->是||CAUSE->*||RAW->导致;;引起;;致使;;引致;;招致||RAW->的
+CAUSE->*||RAW->导致;;引起;;致使;;引致;;招致||EFFECT->*
