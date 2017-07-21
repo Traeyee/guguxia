@@ -2,11 +2,13 @@
 # -*- coding: utf-8 -*-
 
 import sys
+import os
 import re
 
 sys.path.append("..")
 from compatitator import *
 
+dir_mod = os.path.split(os.path.realpath(__file__))[0]
 
 str_test = r"好像是之你是肥仔，是大家肥，肥，大概是引致的我也是肥仔"
 
@@ -29,7 +31,7 @@ class Pair(object):
 
 
 list_pattern = []
-with open("CE.txt", "r") as f_in:
+with open(os.path.join(dir_mod, "CE.txt"), "r") as f_in:
     for line in f_in:
         list_temp2 = []
         for item in strdecode(line.strip()).split(u"||"):
