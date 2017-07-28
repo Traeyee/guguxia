@@ -15,6 +15,7 @@ switch_debug = False
 PATH_PARATAXIS_DEFAULT = "PARATAXIS.txt"
 PATH_EFFECT_DEFAULT = "EFFECT.txt"
 PATH_REASONING_DEFAULT = "REASONING.txt"
+PATH_INCLUDING_DEFAULT = "INCLUDING.txt"
 
 dir_mod = os.path.split(os.path.realpath(__file__))[0]
 
@@ -22,7 +23,8 @@ _get_abs_path = lambda path: os.path.normpath(os.path.join(os.getcwd(), path))
 
 str_test = r"因为你是肥仔，所以我也是肥仔"
 # str_test = r"这个是可以缓解症状的"
-str_test = r"用于治疗和预防全身所有部位的骨关节炎，包括膝关节、肩关节、髋关节、手腕关节、颈及脊椎关节和踝关节等。可缓解和消除骨关节炎的疼痛、肿胀等症状，改善关节活动功能。"
+# str_test = r"用于治疗和预防全身所有部位的骨关节炎，包括膝关节、肩关节、髋关节、手腕关节、颈及脊椎关节和踝关节等。可缓解和消除骨关节炎的疼痛、肿胀等症状，改善关节活动功能。"
+str_test = r"用于治疗和预防全身所有部位的骨关节炎，包括膝关节、肩关节、髋关节、手腕关节、颈及脊椎关节和踝关节等"
 
 
 chars_strip = [u"，", u",", u'"', u"。"]
@@ -75,8 +77,10 @@ class Guguxia(object):
         self.loaded_effect = False
         self.loaded_reasoning= False
         self.loaded_parataxis = False
+        self.loaded_including = False
         self.patterns_effect = []
         self.patterns_reasoning = []
+        self.patterns_including = []
 
     def engine_normal(self, str0, list_pattern):
         list_tang = []
@@ -154,14 +158,22 @@ class Guguxia(object):
                             if subj[: idx].endswith(sign_para):
                                 # dict_rst_map[u"SUBJECT"].append(subj[:
                                 # (idx - len(sign_para))])
-                                for subj_tmp in self.tool_parataxis(subj[:
-                                (idx - len(sign_para))]):
-                                    if len(subj_tmp) > 0:
-                                        dict_rst_map[u"SUBJECT"].append(subj_tmp)
+                                dict_temp = self.tool_including(subj[: (idx - len(sign_para))])
+                                for dad in dict_temp[u"FATHER"]:
+                                    if len(dad) > 0:
+                                        dict_rst_map[u"SUBJECT"].append(dad)
+                                for son in dict_temp[u"SON"]:
+                                    if len(son) > 0:
+                                        dict_rst_map[u"SUBJECT"].append(son)
                                 dict_temp = self.pointer_effect(subj[idx:])
                                 for subj_tmp in dict_temp[u"SUBJECT"]:
-                                    if len(subj_tmp) > 0:
-                                        dict_rst_map[u"SUBJECT"].append(subj_tmp)
+                                    dict_temp2 = self.tool_including(subj_tmp)
+                                    for dad in dict_temp2[u"FATHER"]:
+                                        if len(dad) > 0:
+                                            dict_rst_map[u"SUBJECT"].append(dad)
+                                    for son in dict_temp2[u"SON"]:
+                                        if len(son) > 0:
+                                            dict_rst_map[u"SUBJECT"].append(son)
                                     # for sub_subj_tmp in self.tool_parataxis(subj_tmp):
                                         # dict_rst_map[u"SUBJECT"].append(sub_subj_tmp)
                                 flag_break = True
@@ -169,14 +181,18 @@ class Guguxia(object):
                         else:
                             if switch_debug:
                                 print ("Debug(1): %s" % subj).encode("utf-8")
-
                     elif switch_debug:
                         print ("Debug(2): %s" % subj).encode("utf-8")
                     if flag_break:
                         break
                 else:
-                    for subj_tmp in self.tool_parataxis(subj):
-                        dict_rst_map[u"SUBJECT"].append(subj_tmp)
+                    dict_temp3 = self.tool_including(subj)
+                    for dad in dict_temp3[u"FATHER"]:
+                        if len(dad) > 0:
+                            dict_rst_map[u"SUBJECT"].append(dad)
+                    for son in dict_temp3[u"SON"]:
+                        if len(son) > 0:
+                            dict_rst_map[u"FATHER"].append(son)
         return dict_rst_map
 
 
@@ -232,6 +248,50 @@ class Guguxia(object):
         else:
             list_rt.append(str0)
         return list_rt
+
+    def tool_including(self, str0):
+        if not self.loaded_including:
+            with open(os.path.join(dir_mod, PATH_INCLUDING_DEFAULT), "r") as f_in:
+                for line in f_in:
+                    list_temp2 = []
+                    for item in strdecode(line.strip()).split(u"||"):
+                        list_temp = item.split(u"->")
+                        flag_tmp = u""
+                        if u"FATHER" == list_temp[0]:
+                            flag_tmp = u"TANG"
+                        elif u"SON" == list_temp[0]:
+                            flag_tmp = u"SONG"
+                        elif u"RAW" == list_temp[0]:
+                            flag_tmp = u"RAW"
+                        else:
+                            list_temp2 = []
+                            break
+                        list_temp2.append(Pair(flag_tmp, list_temp[1]))
+                    self.patterns_including.append(Pattern(list_temp2))
+            f_in.close()
+            self.loaded_including = True
+        dict_rst = self.engine_normal(str0, self.patterns_including)
+        dict_rst_map = {}
+        dict_rst_map[u"FATHER"] = []
+        dict_rst_map[u"SON"] = []
+
+        if not self.loaded_parataxis:
+            self.tool_parataxis(u"")
+
+        for item1 in dict_rst[u"TANG"]:
+            for item2 in self.tool_parataxis(item1):
+                if len(item1) > 0:
+                    dict_rst_map[u"FATHER"].append(item2)
+
+        for item1 in dict_rst[u"SONG"]:
+            for item2 in self.tool_parataxis(item1):
+                if len(item1) > 0:
+                    dict_rst_map[u"SON"].append(item2)
+
+        if 0 == len(dict_rst_map[u"SON"]) + len(dict_rst_map[u"FATHER"]):
+            dict_rst_map[u"FATHER"].append(str0)
+
+        return dict_rst_map
 
     def load_parataxis(self, path_and=PATH_PARATAXIS_DEFAULT):
         path_and = os.path.join(dir_mod, path_and)
@@ -392,17 +452,19 @@ class Guguxia(object):
 if __name__ == "__main__":
     lk = loukou.Loukou()
     ggx = Guguxia(lk)
-    # dict_st = ggx.pointer_effect(str_test)
-    # for item in dict_st[u"OBJECT"]:
-    #     print item.encode("utf-8")
-    # for item in dict_st[u"SUBJECT"]:
-    #     print item.encode("utf-8")
-    # dict_st = ggx.tool_reasoning(str_test)
-    # for item in dict_st[u"CAUSE"]:
-    #     print item.encode("utf-8")
-    #     print Juzi(item).strip().encode("utf-8")
-    # for item in dict_st[u"EFFECT"]:
-    #     print item.encode("utf-8")
-    #     print Juzi(item).strip().encode("utf-8")
-    for item in ggx.tool_parataxis(str_test):
+    # 测试 including
+    # dict_rst = ggx.tool_including(str_test)
+    # for item in dict_rst[u"FATHER"]:
+    #     print item
+    # for item in dict_rst[u"SON"]:
+    #     print item
+    # dict_rst = ggx.tool_reasoning(str_test)
+    # for item in dict_rst[u"CAUSE"]:
+    #     print item
+    # for item in dict_rst[u"EFFECT"]:
+    #     print item
+    dict_rst = ggx.pointer_effect(str_test)
+    for item in dict_rst[u"OBJECT"]:
+        print item
+    for item in dict_rst[u"SUBJECT"]:
         print item
